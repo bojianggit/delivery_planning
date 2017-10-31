@@ -1,0 +1,273 @@
+/*
+ * The following line expands to a class that has as values the name
+ * of every feature defined in the environment file. The name of the
+ * class is Location
+ */
+#LOCATION_CLASS
+
+class Boolean {
+  value yes;
+  value no;
+}
+
+class Warehouse {
+  Boolean has_sugar;
+  Boolean has_cream;
+  Location location;
+}
+
+class Customer {
+  Boolean wants_sugar;
+  Boolean wants_cream;
+  Location location;
+}
+
+class Quadrotor {
+  Boolean flying;
+  Location location;
+  Boolean has_sugar_1;
+  Boolean has_cream_1;
+  Boolean has_sugar_2;
+  Boolean has_cream_2;
+  
+  primitive method pickup_sugar_1_cream_2(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_sugar == yes
+    && w.has_cream == yes
+    && has_sugar_1 == no
+    && has_cream_1 == no
+    && has_sugar_2 == no
+    && has_cream_2 == no
+    => has_sugar_1 == yes
+    && has_cream_2 == yes;
+  
+  primitive method deliver_sugar_1_cream_2(Customer c1)
+    has_sugar_1 == yes
+    && has_cream_2 == yes
+    && location == c1.location
+    => has_sugar_1 == no
+    && has_cream_2 == no
+    && c1.wants_sugar == no
+    && c1.wants_cream == no;  
+  
+  primitive method pickup_sugar_2_cream_1(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_sugar == yes
+    && w.has_cream == yes
+    && has_sugar_1 == no
+    && has_cream_1 == no
+    && has_sugar_2 == no
+    && has_cream_2 == no
+    => has_sugar_2 == yes
+    && has_cream_1 == yes;
+  
+  primitive method deliver_sugar_2_cream_1(Customer c1)
+    has_sugar_2 == yes
+    && has_cream_1 == yes
+    && location == c1.location
+    => has_sugar_2 == no
+    && has_cream_1 == no
+    && c1.wants_sugar == no
+    && c1.wants_cream == no;  
+    
+  primitive method pickup_sugar_1(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_sugar == yes
+    && has_sugar_1 == no
+    && has_cream_1 == no
+    => has_sugar_1 == yes;
+  
+  primitive method deliver_sugar_1(Customer c1)
+    has_sugar_1 == yes
+    && location == c1.location
+    => has_sugar_1 == no
+    && c1.wants_sugar == no;
+    
+  primitive method pickup_cream_1(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_cream == yes
+    && has_sugar_1 == no
+    && has_cream_1 == no
+    => has_cream_1 == yes;
+  
+  primitive method deliver_cream_1(Customer c1)
+    has_cream_1 == yes
+    && location == c1.location
+    => has_cream_1 == no
+    && c1.wants_cream == no;
+
+  primitive method pickup_sugar_2(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_sugar == yes
+    && has_sugar_2 == no
+    && has_cream_2 == no
+    => has_sugar_2 == yes;
+  
+  primitive method deliver_sugar_2(Customer c1)
+    has_sugar_2 == yes
+    && location == c1.location
+    => has_sugar_2 == no
+    && c1.wants_sugar == no;
+    
+  primitive method pickup_cream_2(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_cream == yes
+    && has_sugar_2 == no
+    && has_cream_2 == no
+    => has_cream_2 == yes;
+  
+  primitive method deliver_cream_2(Customer c1)
+    has_cream_2 == yes
+    && location == c1.location
+    => has_cream_2 == no
+    && c1.wants_cream == no;
+
+  primitive method takeoff()
+    flying == no
+    => flying == yes;
+
+  primitive method land()
+    flying == yes
+    => flying == no;
+  
+  /*
+   * The following line is responsible for inserting
+   * the primitive methods that allow the ARDrone to
+   * fly between different regions.
+   *
+   * It takes two required arguments and one optional argument.
+   *
+   * The first argument is the name of the field holding that
+   * represents the ARDrone's current location. It must be of
+   * type Location.
+   *
+   * The second argument is the verb that describes what happens
+   * when this vehicle moves. Leave it as fly for this project.
+   *
+   * The third argument is optional. If provided it is a formula
+   * that describes preconditions to moving. In this case, we've
+   * specified that the ARDrone must be flying before it can
+   * move between regions.
+   */
+  #MOTION_PRIMITIVES(location, fly, flying==yes)
+}
+
+
+
+class Main {
+  Quadrotor q;
+  Warehouse warehouse1;
+  Warehouse warehouse2;
+  Warehouse warehouse3;
+  Warehouse warehouse4;
+  Customer customer1;
+  Customer customer2;
+  Customer customer3;
+  Customer customer4;
+  Customer customer5;
+  Customer customer6;
+  Customer customer7;
+  Customer customer8;
+  Customer customer9;
+  Customer customer10;
+  
+  Main(){
+    q.location = w1;
+    q.flying = no;
+    q.has_sugar_1 = no;
+    q.has_cream_1 = no;
+    q.has_sugar_2 = no;
+    q.has_cream_2 = no;
+    
+    warehouse1.location = w1;
+    warehouse1.has_sugar = yes;
+    warehouse1.has_cream = yes;
+    
+    warehouse2.location = w2;
+    warehouse2.has_sugar = yes;
+    warehouse2.has_cream = yes;
+    
+    warehouse3.location = w3;
+    warehouse3.has_sugar = yes;
+    warehouse3.has_cream = yes;
+    
+    warehouse4.location = w4;
+    warehouse4.has_sugar = yes;
+    warehouse4.has_cream = yes;
+    
+    customer1.location = c1;
+    customer1.wants_sugar = yes;
+    customer1.wants_cream = yes;
+    
+    customer2.location = c2;
+    customer2.wants_sugar = yes;
+    customer2.wants_cream = yes;
+    
+    customer3.location = c3;
+    customer3.wants_sugar = yes;
+    customer3.wants_cream = yes;
+      
+    customer4.location = c4;
+    customer4.wants_sugar = yes;
+    customer4.wants_cream = yes;
+    
+    customer5.location = c5;
+    customer5.wants_sugar = yes;
+    customer5.wants_cream = yes;
+    
+    customer6.location = c6;
+    customer6.wants_sugar = yes;
+    customer6.wants_cream = yes;
+    
+    customer7.location = c7;
+    customer7.wants_sugar = yes;
+    customer7.wants_cream = yes;
+      
+    customer8.location = c8;
+    customer8.wants_sugar = yes;
+    customer8.wants_cream = yes;
+    
+    customer9.location = c9;
+    customer9.wants_sugar = yes;
+    customer9.wants_cream = yes;
+    
+    customer10.location = c10;
+    customer10.wants_sugar = yes;
+    customer10.wants_cream = yes;
+  }
+
+  method run() {
+    sequence {
+      parallel{
+        (customer1.wants_sugar == no);
+        (customer2.wants_sugar == no);
+        (customer3.wants_sugar == no);
+        (customer4.wants_sugar == no);
+        (customer5.wants_sugar == no);
+        (customer6.wants_sugar == no);
+        (customer7.wants_sugar == no);
+        (customer8.wants_sugar == no);
+        (customer9.wants_sugar == no);
+        (customer10.wants_sugar == no);
+        (customer1.wants_cream == no);
+        (customer2.wants_cream == no);
+        (customer3.wants_cream == no);
+        (customer4.wants_cream == no);
+        (customer5.wants_cream == no);
+        (customer6.wants_cream == no);
+        (customer7.wants_cream == no);
+        (customer8.wants_cream == no);
+        (customer9.wants_cream == no);
+        (customer10.wants_cream == no);
+        
+      }
+      ( q.location == w1 && q.flying == no);
+    }
+  }
+}

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+(cd ~/jupyter/projects/project1 \
+	&& find -path ./.git -prune -o \( -type f -a -not -name "*~"  -a -not -name "*.pyc" -print0 \) | xargs -0 tar cvaf ../project1-submission.tar.gz)

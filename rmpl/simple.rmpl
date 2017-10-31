@@ -1,0 +1,102 @@
+/*
+ * The following line expands to a class that has as values the name
+ * of every feature defined in the environment file. The name of the
+ * class is Location
+ */
+#LOCATION_CLASS
+
+class Boolean {
+  value yes;
+  value no;
+}
+
+class Warehouse {
+  Boolean has_sugar;
+  Location location;
+}
+
+class Customer {
+  Boolean wants_sugar;
+  Location location;
+}
+
+class Quadrotor {
+  Boolean flying;
+  Location location;
+  Boolean has_sugar;
+  
+  primitive method pickup_sugar(Warehouse w)
+    flying == no
+    && w.location == location
+    && w.has_sugar == yes
+    => has_sugar == yes;
+  
+  primitive method deliver_sugar(Customer c1)
+    has_sugar == yes
+    && location == c1.location
+    => has_sugar == no
+    && c1.wants_sugar == no;
+  
+  primitive method takeoff()
+    flying == no
+    => flying == yes;
+
+  primitive method land()
+    flying == yes
+    => flying == no;
+  
+  /*
+   * The following line is responsible for inserting
+   * the primitive methods that allow the ARDrone to
+   * fly between different regions.
+   *
+   * It takes two required arguments and one optional argument.
+   *
+   * The first argument is the name of the field holding that
+   * represents the ARDrone's current location. It must be of
+   * type Location.
+   *
+   * The second argument is the verb that describes what happens
+   * when this vehicle moves. Leave it as fly for this project.
+   *
+   * The third argument is optional. If provided it is a formula
+   * that describes preconditions to moving. In this case, we've
+   * specified that the ARDrone must be flying before it can
+   * move between regions.
+   */
+  #MOTION_PRIMITIVES(location, fly, flying==yes)
+}
+
+
+
+class Main {
+  Quadrotor q;
+  Warehouse warehouse1;
+  Customer customer1;
+  Customer customer2;
+  
+  Main(){
+    q.location = w1;
+    q.flying = no;
+    q.has_sugar = no;
+    
+    warehouse1.location = w1;
+    warehouse1.has_sugar = yes;
+    
+    customer1.location = c1;
+    customer1.wants_sugar = yes;
+    
+    customer2.location = c2;
+    customer2.wants_sugar = yes;
+  }
+
+  method run() {
+    sequence {
+      parallel{
+        (customer1.wants_sugar == no);
+        (customer2.wants_sugar == no);
+      }
+      (q.location == w1 && q.flying == no);
+    }
+  }
+} 

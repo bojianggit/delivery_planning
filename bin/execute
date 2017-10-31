@@ -1,0 +1,165 @@
+#!/usr/bin/env python
+
+import matplotlib
+matplotlib.use('GTKAgg')
+from matplotlib import pyplot as plt
+import math
+
+import intro_to_autonomy.project1.environment as environment
+import intro_to_autonomy.project1.vis as vis
+
+import time
+import argparse
+
+import socket
+
+import subprocess32 as sub
+import multiprocessing as mp
+import threading
+import os
+
+from shapely.wkt import loads
+
+import re
+
+class PikeRunner(mp.Process):
+    def __init__(self, plan_file, command_pipe):
+        mp.Process.__init__(self)
+        self.plan_file = plan_file
+        self.command_pipe = command_pipe
+
+    def process_commands(self):
+        while (self.p.poll() is None):
+            l = self.p.stdout.readline()
+            self.command_pipe.send(l)
+            result = self.command_pipe.recv()
+            self.p.stdin.write(result)
+    
+    def run(self):
+        FNULL = open(os.devnull, 'w')
+        self.p = sub.Popen(['pike', self.plan_file],
+                           stdout=sub.PIPE,
+                           stdin=sub.PIPE,
+                           stderr=FNULL,
+                           close_fds=True)
+        FNULL.close()
+        self.reader = threading.Thread(target=self.process_commands)
+        self.reader.start()
+        self.p.wait()
+
+def run_pike(plan_file, pipe):
+    p = PikeRunner(plan_file, pipe)
+    p.start()
+    return p
+
+class Simulator(mp.Process):
+    def __init__(self, env_file, start_feature, command_pipe, paths_file, speed):
+        mp.Process.__init__(self)
+        self.env_file = env_file
+        self.start_feature = start_feature
+        self.command_pipe = command_pipe
+        self.command_matcher = re.compile("^([0-9]+):(.*):(.*):(.*)$")
+        self.activity_matcher = re.compile(r"^\(Quadrotor\.([^\s]+) (.*)\)$")
+        self.fly_matcher = re.compile(r"^fly__(.*)__(.*)$")
+        self.target = (0,0)
+        self.pose = (0,0)
+        self.paths = {}
+        self.delta = speed*0.1
+        path_matcher = re.compile("^(.*):(.*):(.*)$")
+        with open(paths_file) as f:
+            for l in f.readlines():
+                m = re.match(path_matcher, l)
+                if m is not None:
+                    self.paths[(m.group(1), m.group(2))] = loads(m.group(3))
+
+    def parse_command(self, command):
+        m = re.match(self.command_matcher, command)
+        if m is None:
+            return None
+        else:
+            return (m.group(1), m.group(2), float(m.group(3)), float(m.group(4)))
+
+    def dispatch_command(self, command):
+        parsed_activity = re.match(self.activity_matcher, command)
+        if parsed_activity is None:
+            return False
+        activity, args = parsed_activity.group(1,2)
+        if activity == 'land':
+            print "Landed."
+        elif activity == 'takeoff':
+            print "Launched."
+        elif activity.startswith('deliver_'):
+            print "Delivered", activity[8:]
+        elif activity.startswith('pickup_'):
+            print "Picked up", activity[7:]
+        elif activity.startswith('fly__'):
+            m = re.match(self.fly_matcher, activity)
+            from_region, to_region = m.group(1,2)
+            print "flying from:", from_region, "to:", to_region
+            path = self.paths[(from_region, to_region)]
+            for point in path.coords:
+                self.target = point
+                while abs(self.pose[0] - self.target[0]) > 1e-3\
+                      or abs(self.pose[1] - self.target[1]) > 1e-3:
+                    time.sleep(0.1)
+        else:
+            print "Unknown command:", activity, args
+            return True
+        return True
+    
+    def command_reader(self):
+        l = self.command_pipe.recv()
+        command = self.parse_command(l)
+        while command is not None:
+            ident, command, lb, ub = command
+            result = self.dispatch_command(command)
+            if result:
+                self.command_pipe.send("success:"+ident+"\n")
+            else:
+                self.command.pipe.send("failure:"+ident+"\n")
+            l = self.command_pipe.recv()
+            command = self.parse_command(l)
+            
+            
+    def run(self):
+        plt.ion()
+        env = environment.Environment(self.env_file)
+        self.pose = env.features_map[self.start_feature].centroid.coords[0]
+        self.target = self.pose
+        v = vis.Visualization(env, self.pose)
+        self.command_thread = threading.Thread(target=self.command_reader)
+        self.command_thread.daemon = False
+        self.command_thread.start()
+        while self.command_thread.is_alive():
+            errx = self.target[0] - self.pose[0]
+            erry = self.target[1] - self.pose[1]
+            mag = math.sqrt(errx**2 + erry**2)
+            if mag > self.delta:
+                errx *= self.delta/mag
+                erry *= self.delta/mag
+            self.pose = (self.pose[0] + errx, self.pose[1] + erry)
+            v.update_pose(self.pose)
+            time.sleep(0.1)
+        plt.ioff()
+        print "Execution finished. Close graph to end program."
+        plt.show()
+
+def run_simulator(env_file, start_feature, command_pipe, paths_file, speed):
+    p = Simulator(env_file, start_feature, command_pipe, paths_file, speed)
+    p.start()
+    return p
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(description="Simulate quadrotor execution.")
+    parser.add_argument('plan_file', help='The file containing the plan to execute.')
+    parser.add_argument('environment_file', help='The location of the environment file.')
+    parser.add_argument('start_feature', help='The feature the vehicle starts at.')
+    parser.add_argument('paths_file', help='Location of the path file.')
+    parser.add_argument('--speed', help='Speed of the quadrotor in m/s',type=float, default=1.0)
+    args = parser.parse_args()
+    display_side, pike_side = mp.Pipe()
+    p = run_pike(args.plan_file, pike_side)
+    s = run_simulator(args.environment_file, args.start_feature, display_side, args.paths_file, args.speed)
+    s.join()
+    if p.is_alive():
+        p.terminate()

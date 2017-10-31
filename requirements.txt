@@ -1,0 +1,7 @@
+pyyaml
+shapely
+ipython
+descartes
+networkx
+matplotlib
+subprocess32

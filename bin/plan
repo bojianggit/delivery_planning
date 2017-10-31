@@ -1,0 +1,40 @@
+#! /bin/bash
+
+set -e
+
+# Given an RMPL file, output a plan.
+
+RMPL_IN_FILE=$1
+OUT_FILE=$2
+
+TIMEOUT=$3
+
+RMPL_COMPILER="java -jar /usr/local/lib/rmpl/RMPLtoTPN.jar"
+
+if [ ! -f $RMPL_IN_FILE ]; then
+    echo "RMPL input file does not exist."
+    exit 1
+fi
+
+if [ -z "$OUT_FILE" ]; then
+    echo "Need to specify the output file."
+    exit 2
+fi
+
+if [ -z "$TIMEOUT" ]; then
+    TIMEOUT="10"
+fi
+
+FOLDER=$(mktemp -d)
+
+echo "Storing temp files in $FOLDER"
+
+cp $RMPL_IN_FILE $FOLDER
+RMPL_IN_FILE=${FOLDER}/${RMPL_IN_FILE##*/}
+echo $RMPL_IN_FILE
+
+$RMPL_COMPILER $RMPL_IN_FILE
+
+tburton -d ${RMPL_IN_FILE}.xml -p ${RMPL_IN_FILE}.tpn -o ${OUT_FILE} --total-order=no -s grouped --time-out=${TIMEOUT}
+
+sed -i -e "s/0\.001/INF/g" ${OUT_FILE}

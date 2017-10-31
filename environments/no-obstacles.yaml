@@ -1,0 +1,27 @@
+environment:
+  features:
+    c1:
+      corners:
+      - [10, 5]
+      - [10, 6]
+      - [11, 6]
+      - [11, 5]
+      - [10, 5]
+      shape: polygon
+    c2:
+      corners:
+      - [10, -5]
+      - [10, -6]
+      - [11, -6]
+      - [11, -5]
+      - [10, -5]
+      shape: polygon
+    w1:
+      corners:
+      - [-0.5, -0.5]
+      - [-0.5, 0.5]
+      - [0.5, 0.5]
+      - [0.5, -0.5]
+      - [-0.5, -0.5]
+      shape: polygon
+  obstacles: {}
